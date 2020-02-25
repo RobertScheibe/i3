@@ -12,6 +12,17 @@
 set $mod Mod1
 set $ms Mod4
 
+font xft:monospace bold 9
+# class                 border  backgr. text    indicator
+#client.focused          #859900 #859900 #fdf6e3 #2e9ef4
+#client.focused_inactive #268bd2 #268bd2 #fdf6e3 #484e50
+#client.unfocused        #333333 #93a1a1 #fdf6e3 #292d2e
+
+#focus_follows_mouse no
+focus_on_window_activation smart
+mouse_warping none
+popup_during_fullscreen smart
+
 # font for window titles. ISO 10646 = Unicode
 font -misc-fixed-medium-r-normal--13-120-75-75-C-70-iso10646-1
 
@@ -26,7 +37,8 @@ bindsym $mod+Return exec /usr/bin/urxvt
 bindsym $mod+Shift+Q kill
 
 # start dmenu (a program launcher)
-bindsym $mod+d exec dmenu_run
+#bindsym $mod+d exec dmenu_run
+bindsym $mod+d exec --no-startup-id rofi -rnow -show run
 
 # change focus
 bindsym $mod+j focus left
@@ -77,6 +89,13 @@ bindsym $mod+a focus parent
 
 # focus the child container
 #bindcode $mod+d focus child
+#set $ws1 "1" #1:logs"
+#set $ws2 "2" #:mail"
+#set $ws3 "3" #:terminals"
+#set $ws4 "4" #:browser"
+#set $ws5 "5" #:filemanager"
+#set $ws6 "6" #:putty"
+#set $ws7 "7" #:keepass"
 
 # switch to workspace
 bindsym $mod+1 workspace 1
@@ -90,6 +109,10 @@ bindsym $mod+8 workspace 8
 bindsym $mod+9 workspace 9
 bindsym $mod+0 workspace 10
 
+#bar {
+#    strip_workspace_numbers yes
+#}
+
 # move focused container to workspace
 bindsym $mod+Shift+exclam move workspace 1
 bindsym $mod+Shift+at move workspace 2
@@ -101,6 +124,8 @@ bindsym $mod+Shift+ampersand move workspace 7
 bindsym $mod+Shift+asterisk move workspace 8
 bindsym $mod+Shift+parenleft move workspace 9
 bindsym $mod+Shift+parenright move workspace 10
+
+bindsym $mod+b workspace back_and_forth
 
 # reload the configuration file
 bindsym $mod+Shift+C reload
@@ -136,11 +161,34 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
+##
+# move floating windows with keys
+bindsym $mod+m mode "move" focus floating
+
+mode "move" {
+    bindsym $mod+Tab focus right
+
+    bindsym Left  move left
+    bindsym Down  move down
+    bindsym Up    move up
+    bindsym Right move right
+
+    bindsym j     move left
+    bindsym k     move down
+    bindsym l     move up
+    bindsym semicolon     move right
+
+    # back to normal: Enter or Escape
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
 # Start i3bar to display a workspace bar (plus the system information i3status
 # finds out, if available)
 bar {
-        #status_command i3status | ~/bin/wrapper.py
-        status_command i3status
+        status_command i3status | ~/.config/i3/wrapper.py
+        #status_command i3status
+        #status_command py3status
 }
 
 # Make the currently focused window a scratchpad
@@ -159,15 +207,33 @@ for_window [title="(?i)VirtualBox"] floating enable
 for_window [title="FXTerm"] floating enable
 for_window [title="Vivado"] floating enable
 for_window [title="GigEVisionART"] floating enable
+for_window [title="SMT3Display"] move to workspace 1
+for_window [title="SMT3Display"] fullscreen
 for_window [title="(?i)FlyCap"] floating enable
 
 #change keyboard layout
-bindsym $ms+d exec setxkbmap de
-bindsym $ms+e exec setxkbmap us
-bindsym $ms+l exec "~/.i3/fuzzy_lock.sh"
+bindsym $ms+d exec "setxkbmap de; xmodmap -e 'clear Lock' -e 'keysym Caps_Lock = Escape'; echo 'DE' > /tmp/keyboard.txt; killall -USR1 i3status"
+bindsym $ms+e exec "setxkbmap us; xmodmap -e 'clear Lock' -e 'keysym Caps_Lock = Escape'; echo 'EN' > /tmp/keyboard.txt; killall -USR1 i3status"
+bindsym $ms+$mod+l exec "~/.i3/fuzzy_lock.sh"
 exec --no-startup-id "xautolock -time 15 -locker '~/.i3/fuzzy_lock.sh'"
+bindsym $ms+minus exec "ponymix decrease 10%"
+bindsym $ms+equal exec "ponymix increase 10%"
+bindsym $ms+0 exec "ponymix toggle"
 
-workspace 1 output HDMI1
+#coursor
+bindsym --release $ms+k exec "xdotool key --clearmodifiers Down"
+bindsym --release $ms+l exec "xdotool key --clearmodifiers Up"
+bindsym --release $ms+j exec "xdotool key --clearmodifiers Left"
+bindsym --release $ms+semicolon exec "xdotool key --clearmodifiers Right"
+#mouse movement
+bindsym --release $ms+Shift+k exec "xdotool mousemove_relative -- 0 100"
+bindsym --release $ms+Shift+l exec "xdotool mousemove_relative -- 0 -100"
+bindsym --release $ms+Shift+j exec "xdotool mousemove_relative -- -100 0"
+bindsym --release $ms+Shift+semicolon exec "xdotool mousemove_relative -- 100 0"
+bindsym --release $ms+Shift+i exec "xdotool click --clearmodifiers 1"
+bindsym --release $ms+Shift+o exec "xdotool click --clearmodifiers 3"
+
+workspace 1 output HDMI3
 
 workspace 2 output DP1
 workspace 4 output DP1
@@ -176,22 +242,24 @@ workspace 5 output DP1
 workspace 3 output DP2
 workspace 6 output DP2
 
-exec --no-startup-id "i3-msg 'workspace 1; exec urxvt -e htop; layout splitv;'"
+exec --no-startup-id "i3-msg 'workspace 1; exec urxvt -e glances; layout splitv;'"
 exec --no-startup-id "i3-msg 'workspace 1; exec urxvt -e bash -c \"journalctl -fxe | ccze\"'"
 
 exec --no-startup-id "i3-msg 'workspace 3; append_layout /home/robert/data/docs/i3wm/ws3.json;'"
-exec --no-startup-id "sh -c 'sleep 3'; i3-msg 'workspace 3; exec urxvt -name code -cd /home/robert/; exec urxvt -name test -cd /home/robert/src/test; exec urxvt -name ssh -cd /home/robert/; exec urxvt -name display -cd /home/robert/src/display; exec urxvt -name messages'"
 
 exec --no-startup-id "i3-msg 'workspace 2; append_layout /home/robert/data/docs/i3wm/ws2.json'"
-exec --no-startup-id "i3-msg 'workspace 2; exec thb'"
 
 exec --no-startup-id "i3-msg 'workspace 4; append_layout /home/robert/data/docs/i3wm/ws4.json;'"
-exec --no-startup-id "i3-msg 'workspace 4; exec chromium-browser --disable-gpu'"
 
 exec --no-startup-id "i3-msg 'workspace 5; append_layout /home/robert/data/docs/i3wm/ws5.json;'"
-exec --no-startup-id "i3-msg 'workspace 5; exec nautilus'"
+exec --no-startup-id "i3-msg 'workspace 5; exec urxvt -e bash -c \"ranger\"'"
+exec --no-startup-id "i3-msg 'workspace 5; exec nautilus"
 
 exec --no-startup-id "i3-msg 'workspace 6; append_layout /home/robert/data/docs/i3wm/ws6.json;'"
 exec --no-startup-id "i3-msg 'workspace 6; exec putty; exec urxvt -name console'"
 
 #exec xcompmgr -c -f -n
+exec --no-startup-id "feh --bg-max ~/downloads/IMG_20200116_091732-PANO.jpg"
+exec --no-startup-id "setxkbmap -layout us -option caps:escape"
+#notify
+exec  --no-startup-id "/usr/lib/notify-osd/notify-osd"
